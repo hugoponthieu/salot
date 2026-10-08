@@ -1,0 +1,28 @@
+machine:
+  kubelet:
+    image: ghcr.io/siderolabs/kubelet:v1.37.0
+    defaultRuntimeSeccompProfileEnabled: true
+    extraArgs:
+      rotate-server-certificates: true
+    extraMounts:
+      - destination: /var/mnt/longhorn
+        type: bind
+        source: /var/mnt/longhorn
+        options:
+          - bind
+          - rshared
+          - rw
+---
+apiVersion: v1alpha1
+kind: KubeletConfig
+$patch: delete
+---
+apiVersion: v1alpha1
+kind: UserVolumeConfig
+name: longhorn
+volumeType: disk
+provisioning:
+  diskSelector:
+    match: disk.dev_path == "/dev/sda"
+filesystem:
+  type: xfs

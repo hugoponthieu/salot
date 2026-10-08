@@ -1,0 +1,4 @@
+apiVersion: v1alpha1
+kind: KubeAPIServerConfig
+extraArgs:
+  advertise-address: 192.168.121.221
