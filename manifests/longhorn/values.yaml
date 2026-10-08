@@ -1,0 +1,6 @@
+defaultSettings:
+  defaultDataPath: "/var/mnt/longhorn"
+  defaultReplicaCount: 2
+  storageMinimalAvailablePercentage: 10
+persistence:
+  defaultClassReplicaCount: 2
