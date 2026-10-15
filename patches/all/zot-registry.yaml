@@ -1,0 +1,6 @@
+apiVersion: v1alpha1
+kind: RegistryMirrorConfig
+name: zot.zot.svc.cluster.local:5000
+endpoints:
+  - url: http://10.100.18.248:5000
+skipFallback: true

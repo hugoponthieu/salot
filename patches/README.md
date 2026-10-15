@@ -12,8 +12,10 @@ talosctl gen config wall https://192.168.121.221:6443 \
   --with-secrets ../secrets.yaml \
   --config-patch @all/disable-flannel.yaml \
   --config-patch @all/rotate-server-certs.yaml \
+  --config-patch @all/zot-registry.yaml \
   --config-patch-worker @worker/install-image.yaml \
   --config-patch-worker @worker/longhorn.yaml \
+  --config-patch-worker @worker/buildkit-sysctl.yaml \
   --config-patch-control-plane @cp/install-image.yaml \
   --config-patch-control-plane @cp/disable-kube-proxy.yaml \
   --config-patch-control-plane @cp/node-ip.yaml \
@@ -47,4 +49,3 @@ Apply the worker configuration only when a worker patch has changed:
 ```bash
 talosctl apply-config --talosconfig=../talosconfig --nodes 192.168.121.85,192.168.121.173 --file worker.yaml
 ```
-
