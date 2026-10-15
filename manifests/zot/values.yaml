@@ -1,0 +1,39 @@
+replicaCount: 1
+
+service:
+  type: ClusterIP
+  port: 5000
+
+persistence: true
+pvc:
+  create: true
+  accessModes:
+    - ReadWriteOnce
+  storage: 20Gi
+  storageClassName: longhorn
+
+mountConfig: true
+configFiles:
+  config.json: |-
+    {
+      "storage": {
+        "rootDirectory": "/var/lib/registry"
+      },
+      "http": {
+        "address": "0.0.0.0",
+        "port": "5000",
+        "readTimeout": "900s",
+        "writeTimeout": "900s"
+      },
+      "log": {
+        "level": "info"
+      },
+      "extensions": {
+        "search": {
+          "enable": true
+        },
+        "ui": {
+          "enable": true
+        }
+      }
+    }

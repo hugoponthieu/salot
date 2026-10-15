@@ -1,0 +1,128 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: buildkit-cache
+  namespace: buildkit
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 20Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: buildkitd
+  namespace: buildkit
+  labels:
+    app: buildkitd
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: buildkitd
+  template:
+    metadata:
+      labels:
+        app: buildkitd
+    spec:
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+      containers:
+        - name: buildkitd
+          image: moby/buildkit:v0.33.1-rootless
+          args:
+            - --addr
+            - unix:///run/user/1000/buildkit/buildkitd.sock
+            - --addr
+            - tcp://0.0.0.0:1234
+            - --config
+            - /home/user/.config/buildkit/buildkitd.toml
+            - --oci-worker-no-process-sandbox
+          ports:
+            - name: buildkit
+              containerPort: 1234
+              protocol: TCP
+          readinessProbe:
+            exec:
+              command:
+                - buildctl
+                - debug
+                - workers
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            exec:
+              command:
+                - buildctl
+                - debug
+                - workers
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            seccompProfile:
+              type: Unconfined
+            appArmorProfile:
+              type: Unconfined
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              memory: 6Gi
+          volumeMounts:
+            - name: config
+              mountPath: /home/user/.config/buildkit/buildkitd.toml
+              subPath: buildkitd.toml
+              readOnly: true
+            - name: cache
+              mountPath: /home/user/.local/share/buildkit
+      volumes:
+        - name: config
+          configMap:
+            name: buildkitd
+        - name: cache
+          persistentVolumeClaim:
+            claimName: buildkit-cache
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: buildkitd
+  namespace: buildkit
+spec:
+  selector:
+    app: buildkitd
+  ports:
+    - name: buildkit
+      port: 1234
+      targetPort: buildkit
+      protocol: TCP
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: buildkitd-ingress
+  namespace: buildkit
+spec:
+  podSelector:
+    matchLabels:
+      app: buildkitd
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: home-dev-container
+      ports:
+        - port: 1234
+          protocol: TCP
+

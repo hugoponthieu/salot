@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: buildkitd
+  namespace: buildkit
+data:
+  buildkitd.toml: |-
+    [log]
+      level = "info"
+
+    [registry."zot.zot.svc.cluster.local:5000"]
+      http = true
+
